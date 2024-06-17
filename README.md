@@ -7,5 +7,7 @@ Generallly activated fibroblasts and CAF (cancer associated fibroblasts) are kno
 
 ## files required to run this code 
 /output/CRC_final_2022-09-05.rds : The processed file of E-MATB 7107 colorectal single cell data 
-
-/data/CRC_expression_os.rda" : TCGA colorectal cancer file
+/results/04.CRC_fbst_vs_all.other.cells.csv : Fibroblast-specific genes calculated based on single cell RNA-seq data
+/data/TCGA.colon.CA-survival.txt : Genes that are signicantly associated with colorectal cancer patients' survival based on TCGA data
+/data/CRC_expression_os.rda : TCGA colorectal cancer RNA-seq and survival files
+  
