@@ -1,1 +1,55 @@
+---
+title: "Colorectal fibroblast subpopulation and its association with Patients' Survival"
+author: "Seok-hyung Kim"
+date: "2023-08-30"
+output: html_document
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading of R packages
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(Seurat)
+library(cowplot)
+library(Matrix)
+library(patchwork)
+library(ggplot2)
+library(GSVA)
+library("maxstat")
+library("survival")
+```
+
+## Loading of data
+```{r}
+ds <-readRDS("../output/CRC_final_2022-09-05.rds")
+ds.fbst <- subset(ds, idents = c("fibroblast-1", "fibroblast-2", "fibroblast_stem-1", "fibroblast_stem-2") )
+ds.fbst@reductions$umap@cell.embeddings %>% as.data.frame() ->umap.value 
+toRemove <- umap.value %>% filter(UMAP_1 < 0 | UMAP_2 > -3.5) %>% rownames()
+ds.fbst <- ds.fbst[,!colnames(ds.fbst) %in% toRemove]
+```
+
+## Calculation of enrichment score of goog prognosis gene set
+```{r}
+rGP.gset <- list(c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
+                  "ITIH5", "RBP1", "HES1", "KCNN3", "MATN2", "EDIL3","CITED2", "PROCR"))
+
+ds.fbst <- AddModuleScore(ds.fbst, features = rGP.gset, name = "GP.fbst", seed = 42)
+```
+
+## Dividing fibroblast into two population
+```{r}
+meta <- ds.fbst@meta.data
+GP.gset.high <- row.names(meta)[meta[ ,"GP.fbst1"] > 0.5]
+GP.gset.low <- row.names(meta)[meta[ ,"GP.fbst1"] < -0.1]
+
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.high,
+                    value = "GP.gset.high")
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.low,
+                    value = "GP.gset.low")
+DimPlot(ds.fbst, label = F, cols = c("red", "blue", "grey", "grey", "grey", "grey"))
+```
