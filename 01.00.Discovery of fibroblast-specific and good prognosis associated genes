@@ -5,7 +5,6 @@ library(Matrix)
 library(patchwork)
 library(ggplot2)
 
-
 #------------------------------------------------------------------------------#
 #                                                                              #
 #     Import colorectal cancer scRNA-seq data and associated datasets          #
