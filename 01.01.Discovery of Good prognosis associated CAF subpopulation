@@ -1,5 +1,5 @@
 ---
-title: "Identification and Analysis of Tumor-Repressive Fibroblasts in Colorectal Cancer Using scRNA-seq Data and Survival Analysis in TCGA Dataset"
+title: "Identification of Tumor-Repressive Fibroblasts in Colorectal Cancer Using scRNA-seq Data and Survival Analysis in TCGA Dataset"
 author: "Seok-hyung Kim"
 date: "2023-08-30"
 output: html_document
@@ -60,18 +60,18 @@ GP.DEG <- FindMarkers(ds.fbst, ident.1 = "GP.gset.high",
 GP.DEG %>% filter(avg_log2FC > 2.1) %>% row.names() -> GP.markers 
 GP.markers
 ```
-  [1] "PCDH18"  "AGT"     "CRYBG3"      "PTGER4"  "EPHA7"  "CYGB"    "INSC"        
-  [8] "MCTP1"   "DACH1"   "TAC3"        "COL4A5"  "ETS2"   "ABCC4"   "TMEM150C"    
- [15] "P2RY14"  "CXCR4"   "WARS"        "RNU12"   "TCF21"  "PDGFD"   "NCAM1"       
- [22] "TSLP"    "TM4SF1"  "PAPPA"       "MCTP2"   "HAAO"   "CXCL1"   "RP11-160E2.6"
- [29] "DDHD1"   "FGFR4"   "CP"          "CCDC68"  "PDGFRA" "CCL7"    "LINC01082"   
- [36] "CHL1"    "PROM1"   "C5orf66-AS1" "MATN2"   "PLAT"   "PCDH19"  "DLL1"        
- [43] "TFPI2"   "SMPDL3A" "APOC1"       "ADGRL3"  "FENDRR" "GADD45G" "PTGER2"      
- [50] "APOE"    "BMP4"    "CTSC"        "FABP5"   "ENHO"   "PITX1"   "CCL11"       
- [57] "NRG1"    "ABCA8"   "VSTM2A"      "FAM150B" "EDIL3"  "RBP1"    "SLITRK6"     
- [64] "F3"      "C8orf4"  "SOX6"        "PTCH1"   "DMKN"   "SFTA1P"  "TRPA1"       
- [71] "EMID1"   "HSD17B2" "FAM105A"     "EDNRB"   "BMP5"   "NSG1"    "HAPLN1"      
- [78] "ADAM28"  "STMN2"   "CCL8"        "CXCL14"  "CCL13"  "ADAMDEC1"   
+   [1] "PCDH18"  "AGT"     "CRYBG3"      "PTGER4"  "EPHA7"  "CYGB"    "INSC"        
+   [8] "MCTP1"   "DACH1"   "TAC3"        "COL4A5"  "ETS2"   "ABCC4"   "TMEM150C"    
+  [15] "P2RY14"  "CXCR4"   "WARS"        "RNU12"   "TCF21"  "PDGFD"   "NCAM1"       
+  [22] "TSLP"    "TM4SF1"  "PAPPA"       "MCTP2"   "HAAO"   "CXCL1"   "RP11-160E2.6"
+  [29] "DDHD1"   "FGFR4"   "CP"          "CCDC68"  "PDGFRA" "CCL7"    "LINC01082"   
+  [36] "CHL1"    "PROM1"   "C5orf66-AS1" "MATN2"   "PLAT"   "PCDH19"  "DLL1"        
+  [43] "TFPI2"   "SMPDL3A" "APOC1"       "ADGRL3"  "FENDRR" "GADD45G" "PTGER2"      
+  [50] "APOE"    "BMP4"    "CTSC"        "FABP5"   "ENHO"   "PITX1"   "CCL11"       
+  [57] "NRG1"    "ABCA8"   "VSTM2A"      "FAM150B" "EDIL3"  "RBP1"    "SLITRK6"     
+  [64] "F3"      "C8orf4"  "SOX6"        "PTCH1"   "DMKN"   "SFTA1P"  "TRPA1"       
+  [71] "EMID1"   "HSD17B2" "FAM105A"     "EDNRB"   "BMP5"   "NSG1"    "HAPLN1"      
+  [78] "ADAM28"  "STMN2"   "CCL8"        "CXCL14"  "CCL13"  "ADAMDEC1"   
 
 
 ## Calculation of enrichment score of "GP.markers" in TCGA colorectal cancer RNA-seq dataset
