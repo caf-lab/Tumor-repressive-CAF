@@ -1,0 +1,182 @@
+# path: /CAF-lab/Project/22.04-Tumor-suppressive_CAF/single_cell_data_analysis/E-MTAB-8107
+# file: "03.CAF_cluster-2.characterization.R" 
+
+library(dplyr)
+library(Seurat)
+library(cowplot)
+library(Matrix)
+library(patchwork)
+library(ggplot2)
+
+#----------------------------------------------------------------------------------------------------#
+#                                                                                                    #
+#                   Import processed scRNA-seq data of colorectal cancer (EMATB-8107)                #
+#                                                                                                    #
+#----------------------------------------------------------------------------------------------------#
+ds <-readRDS("output/CRC_final_2022-09-05.rds")
+ds.fbst <- subset(ds, idents = c("fibroblast-1", "fibroblast-2", "fibroblast_stem-1", "fibroblast_stem-2") )
+
+ds.fbst@reductions$umap@cell.embeddings %>% as.data.frame() ->umap.value 
+toRemove <- umap.value %>% filter(UMAP_1 < 0 | UMAP_2 > -3.5) %>% rownames()
+ds.fbst_filtered <- ds.fbst[,!colnames(ds.fbst) %in% toRemove]
+
+ds.fbst_filtered <- RenameIdents(object = ds.fbst_filtered, "fibroblast-1" = "A")
+ds.fbst_filtered <- RenameIdents(object = ds.fbst_filtered, "fibroblast-2" = "B")
+ds.fbst_filtered <- RenameIdents(object = ds.fbst_filtered, "fibroblast_stem-1" = "C")
+ds.fbst_filtered <- RenameIdents(object = ds.fbst_filtered, "fibroblast_stem-2" = "D")
+ds.fbst <- ds.fbst_filtered
+rm(ds.fbst_filtered)
+
+ds.fbst@active.ident <- factor(ds.fbst@active.ident, levels = c("A", "B", "C", "D"))
+DimPlot(ds.fbst, label=T)
+
+#----------------------------------------------------------------------------------------------------#
+#                                                                                                    #
+#                   Proportional Analysis and Visualization of Fibroblast Subtypes                   #  
+#                           in Normal and Cancerous Colorectal tissues                               #
+#                                                                                                    #
+#----------------------------------------------------------------------------------------------------#
+# Create a table of identities (Idents) and print it
+ident_counts <- table(Idents(ds.fbst))
+ident_counts
+  #   A    B    C    D 
+  # 3188 1909 1629 1117 
+
+# Calculate and print the proportions
+ident_proportions <- prop.table(ident_counts)
+ident_proportions
+  #     A         B         C         D 
+  # 0.4064771 0.2434018 0.2077011 0.1424200 
+
+table(ds.fbst@meta.data$CellFromTumor)
+  #   FALSE(normal)    TRUE 
+  #      3937          3906
+#-----------------------------------------------------------------------------------------------------
+ds.CAF <- subset(ds.fbst, subset = CellFromTumor == TRUE)
+table(Idents(ds.CAF)) / sum(table(Idents(ds.CAF)))
+  #      A          B          C          D 
+  #     565       1898        1078       365 
+  # 0.14464926 0.48591910 0.27598566 0.09344598 
+
+ds.NF <- subset(ds.fbst, subset = CellFromTumor == FALSE)
+table(Idents(ds.NF)) / sum(table(Idents(ds.NF)))
+  #      A           B           C           D 
+  #    2623         11          551         752 
+  # 0.666243332 0.002794006 0.139954280 0.191008382 
+
+df.plot <- data.frame(
+  group = rep(c("normal", "Cancer"), each = 4),
+  category = rep(c("A", "B", "C", "D"), 2),
+  value = c(2623/3937, 11/3937, 551/3937, 752/3937, 565/3906, 1898/3906, 1078/3906, 365/3906)
+)
+
+# Create the plot
+ggplot(df.plot, aes(fill = category, y = value, x = group)) + 
+  geom_bar(position = "stack", stat = "identity") +
+  scale_x_discrete(limits = c("normal", "Cancer"),
+                   expand = c(0.05, 0.01)) +
+  theme_minimal() +
+  ylab("Percentage") +
+  xlab("Group") +
+  ggtitle("Comparison of two groups")
+
+#----------------------------------------------------------------------------------------------------#
+#                                                                                                    #
+#             Analysis of Prognosis-Associated Gene Set Enrichment in Fibroblasts                    # 
+#                          from Cancerous and Normal Colorectal Tissue                               #
+#                                                                                                    #
+#----------------------------------------------------------------------------------------------------#
+plotTheme <- theme_classic(base_size = 18)
+library(RColorBrewer)
+colGEX = c("grey85", brewer.pal(7, "Reds"))      
+
+# # Enrichment of Good prognosis associated gene set in total fibroblasts (cancer and normal tissue)
+rGP.gset <- list(c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
+                   "ITIH5", "RBP1", "HES1", "KCNN3", "MATN2", "EDIL3","CITED2", "PROCR"))
+ds.fbst <- AddModuleScore(ds.fbst, features = rGP.gset, name = "rGP.fbst", seed = 42)
+p4 <- FeaturePlot(ds.fbst, reduction = "umap", pt.size = 0.1,
+                  features = c("rGP.fbst1"), order = TRUE) &
+  scale_color_gradientn(colors = colGEX) & plotTheme & coord_fixed()
+p6 <- VlnPlot(ds.fbst, features = 'rGP.fbst1', split.by = "CellFromTumor")
+
+nClust <- length(unique(Idents(ds.fbst)))
+clustCol <- colorRampPalette(brewer.pal(n = 12, name = "Paired"))(nClust)
+ggOut <- VlnPlot(ds.fbst, pt.size = 0, cols = clustCol,
+                 features = c("rGP.fbst1"))+
+  scale_x_discrete(limits=c("A", "B", "C", "D")) + 
+  ggtitle("Enrichment of Good prognosis associated genes in fibroblasts")
+
+# Enrichment of Poor prognosis associated gene set in total fibroblasts (cancer and normal tissue)
+PP.fbst.manually.curated <-list(c("FHL1", "PBX3", "IMMT", "DLC1", "TGFBR3", "GPC3", "SLIT2", "F10", "LTBP2", "COL18A1",
+                                  "AKR1C1", "HAS2", "SMOC2", "SPRY1", "LHFP", "FBLN5", "TFPI", "CFD", "HTRA1", "COL5A1",
+                                  "TNC", "ADAM12", "GFPT2", "FBN1", "DBN1", "CILP", "DCLK1", "LOX", "MFAP2", "NFASC",
+                                  "CYR61", "CFH", "OMD", "CCL2", "OSR2", "CCDC80", "MAP1B", "ABI3BP", "CXCL12", "MRC2",
+                                  "MEIS1", "HES4", "NNMT", "MFAP5", "COL16A1", "FKBP10", "CD248", "ACTA2", "LAMC1", "SLIT3",
+                                  "POSTN", "SYNPO2", "PTGES", "LTBP4", "DES", "PLAC9", "ALDH1A3", "TPST1", "EBF1", "HSPB6",
+                                  "EMILIN1", "HSPB6", "C1S", "COL8A1", "RGS16", "C7", "SULF1", "CTHRC1", "DDR2", "C1R", "PAM",
+                                  "ADAMTS5", "KANK2", "MAP1A", "GREM1", "CLEC11A", "CRISPLD2", "ISLR", "EFEMP1", "BOC","C1QTNF3",
+                                  "AEBP1", "IGFBP7", "CAV2", "MEG3", "BNC2", "MSRB3", "MXRA8", "CHRDL1", "PTK7", "PALLD", "PHLDA3",
+                                  "TGFB1I1", "TNXB", "MYL9", "PDLIM4", "FERMT2", "SFRP2", "ANGPTL2", "BGN", "PTGIS", "IGFBP6", "FN1",
+                                  "CLU", "GPX8", "MFGE8", "LOXL1", "AKAP12", "TAGLN", "ASPN", "EFEMP2", "SPON2", "GPX3", "LTBP1", 
+                                  "CYBRD1", "LMOD1", "PRELP", "MMP23B", "SRPX", "WISP2", "MEIS2", "PDLIM7", "SPARCL1", "MGP", "NOTCH3",
+                                  "SNCG", "ADAMTS4", "COMP", "ADAMTSL4", "TPM2", "CRIP2","PPP1R14A", "PLN", "PTRF", "GAS1", "PCOLCE2",
+                                  "SPOCK1", "SERPING1"))
+ds.fbst <- AddModuleScore(ds.fbst, features = PP.fbst.manually.curated, name = "PP.fbst2", seed = 42)
+ggOut <- VlnPlot(ds.fbst, pt.size = 0, cols = clustCol,
+                 features = c("PP.fbst21"))+
+  scale_x_discrete(limits=c("A", "B", "C", "D")) + 
+  ggtitle("Enrichment of Poor prognosis associated genes")
+
+# Enrichment of Good prognosis associated gene set in fibroblasts in cancer tissue only
+ds.CAF <- AddModuleScore(ds.CAF, features = rGP.gset, name = "rGP.fbst", seed = 42)
+ggOut <- VlnPlot(ds.CAF, pt.size = 0, clustCol,
+                 features = c("rGP.fbst1"))+
+  scale_x_discrete(limits=c("A", "B", "C", "D")) + 
+  ggtitle("Enrichment of Good prognosis associated gene set in \n fibroblasts in cancer tissue only")
+
+# Enrichment of Poor prognosis associated gene set in fibroblasts in cancer tissue only
+ds.CAF <- AddModuleScore(ds.CAF, features = PP.fbst.manually.curated, name = "PP.fbst2", seed = 42)
+ggOut <- VlnPlot(ds.CAF, pt.size = 0, clustCol,
+                 features = c("PP.fbst21"))+
+  scale_x_discrete(limits=c("A", "B", "C", "D")) + 
+  ggtitle("Enrichment of Poor prognosis associated gene set in \n fibroblasts in cancer tissue only")
+
+# Enrichment of Good prognosis associated gene set in fibroblasts in normal colon tissue only
+ds.NF <- AddModuleScore(ds.NF, features = rGP.gset, name = "rGP.fbst", seed = 42)
+ggOut <- VlnPlot(ds.NF, pt.size = 0, clustCol,
+                 features = c("rGP.fbst1"))+
+  scale_x_discrete(limits=c("A", "B", "C", "D")) + 
+  ggtitle("Enrichment of Good prognosis associated gene set in \n fibroblasts in normal tissue only")
+
+# Enrichment of Poor prognosis associated gene set in fibroblasts in normal colon tissue only
+ds.NF <- AddModuleScore(ds.NF, features = PP.fbst.manually.curated, name = "PP.fbst2", seed = 42)
+ggOut <- VlnPlot(ds.NF, pt.size = 0, clustCol,
+                 features = c("PP.fbst21"))+
+  scale_x_discrete(limits=c("A", "B", "C", "D")) + 
+  ggtitle("Enrichment of Poor prognosis associated gene set in \n fibroblasts in normal tissue only")
+
+
+#-----------------------------------------------------------------------------------------------------#
+#                                                                                                     #
+#       Loading and Scoring CAF and MSC Gene Signatures in Colorectal Fibroblast Clusters and         #
+#                                 Visualizing Their Enrichment                                        #
+#                                                                                                     #
+#-----------------------------------------------------------------------------------------------------#
+library(readxl)
+# Ref: Cancer Discov (2020) 10 (9): 1330–1351
+iCAF <- read_xlsx("signature/Human_iCAF_signature.xlsx") %>% as.list()
+myCAF <- read_xlsx("signature/Human_myCAF_signature.xlsx") %>% as.list()
+mesCAF <- read_xlsx("signature/Human_mesCAF_signature.xlsx") %>% as.list()
+# ref : Br J Haematol. 2019 Feb; 184(4): 578–593.
+MSC <- read.csv("signature/MSC_markers.csv", header = T) %>% as.list()
+
+ds.fbst$cluster <- factor(ds.fbst@active.ident, levels = c("A", "B", "C", "D"))
+ds.fbst <- AddModuleScore(ds.fbst, features = iCAF, name = "iCAF", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = myCAF, name = "myCAF", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = mesCAF, name = "mesCAF", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = MSC, name = "MSC", seed = 42)
+
+FeaturePlot(ds.fbst, features = c("iCAF1","myCAF1","mesCAF1", "MSC1")) 
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0, features = c("iCAF1","myCAF1","mesCAF1", "MSC1"))
+
+
