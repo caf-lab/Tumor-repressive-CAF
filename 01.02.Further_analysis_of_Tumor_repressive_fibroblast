@@ -106,7 +106,7 @@ ggOut <- VlnPlot(ds.fbst, pt.size = 0, cols = clustCol,
   scale_x_discrete(limits=c("A", "B", "C", "D")) + 
   ggtitle("Enrichment of Good prognosis associated genes in fibroblasts")
 
-# Enrichment of Poor prognosis associated gene set in total fibroblasts (cancer and normal tissue)
+# Enrichment of Poor prognosis associated gene set in total fibroblasts from cancer and normal tissue
 PP.fbst.manually.curated <-list(c("FHL1", "PBX3", "IMMT", "DLC1", "TGFBR3", "GPC3", "SLIT2", "F10", "LTBP2", "COL18A1",
                                   "AKR1C1", "HAS2", "SMOC2", "SPRY1", "LHFP", "FBLN5", "TFPI", "CFD", "HTRA1", "COL5A1",
                                   "TNC", "ADAM12", "GFPT2", "FBN1", "DBN1", "CILP", "DCLK1", "LOX", "MFAP2", "NFASC",
@@ -125,41 +125,40 @@ ds.fbst <- AddModuleScore(ds.fbst, features = PP.fbst.manually.curated, name = "
 ggOut <- VlnPlot(ds.fbst, pt.size = 0, cols = clustCol,
                  features = c("PP.fbst21"))+
   scale_x_discrete(limits=c("A", "B", "C", "D")) + 
-  ggtitle("Enrichment of Poor prognosis associated genes")
+  ggtitle("Enrichment of Poor prognosis associated genes in fibroblasts")
 
-# Enrichment of Good prognosis associated gene set in fibroblasts in cancer tissue only
+# Enrichment of Good prognosis associated gene set in fibroblasts from cancer tissue only
 ds.CAF <- AddModuleScore(ds.CAF, features = rGP.gset, name = "rGP.fbst", seed = 42)
 ggOut <- VlnPlot(ds.CAF, pt.size = 0, clustCol,
                  features = c("rGP.fbst1"))+
   scale_x_discrete(limits=c("A", "B", "C", "D")) + 
-  ggtitle("Enrichment of Good prognosis associated gene set in \n fibroblasts in cancer tissue only")
+  ggtitle("Enrichment of Good prognosis associated gene set in \n fibroblasts from cancer tissue only")
 
-# Enrichment of Poor prognosis associated gene set in fibroblasts in cancer tissue only
+# Enrichment of Poor prognosis associated gene set in fibroblasts from cancer tissue only
 ds.CAF <- AddModuleScore(ds.CAF, features = PP.fbst.manually.curated, name = "PP.fbst2", seed = 42)
 ggOut <- VlnPlot(ds.CAF, pt.size = 0, clustCol,
                  features = c("PP.fbst21"))+
   scale_x_discrete(limits=c("A", "B", "C", "D")) + 
-  ggtitle("Enrichment of Poor prognosis associated gene set in \n fibroblasts in cancer tissue only")
+  ggtitle("Enrichment of Poor prognosis associated gene set in \n fibroblasts from cancer tissue only")
 
-# Enrichment of Good prognosis associated gene set in fibroblasts in normal colon tissue only
+# Enrichment of Good prognosis associated gene set in fibroblasts from normal colon tissue only
 ds.NF <- AddModuleScore(ds.NF, features = rGP.gset, name = "rGP.fbst", seed = 42)
 ggOut <- VlnPlot(ds.NF, pt.size = 0, clustCol,
                  features = c("rGP.fbst1"))+
   scale_x_discrete(limits=c("A", "B", "C", "D")) + 
-  ggtitle("Enrichment of Good prognosis associated gene set in \n fibroblasts in normal tissue only")
+  ggtitle("Enrichment of Good prognosis associated gene set in \n fibroblasts from normal tissue only")
 
-# Enrichment of Poor prognosis associated gene set in fibroblasts in normal colon tissue only
+# Enrichment of Poor prognosis associated gene set in fibroblasts from normal colon tissue only
 ds.NF <- AddModuleScore(ds.NF, features = PP.fbst.manually.curated, name = "PP.fbst2", seed = 42)
 ggOut <- VlnPlot(ds.NF, pt.size = 0, clustCol,
                  features = c("PP.fbst21"))+
   scale_x_discrete(limits=c("A", "B", "C", "D")) + 
-  ggtitle("Enrichment of Poor prognosis associated gene set in \n fibroblasts in normal tissue only")
+  ggtitle("Enrichment of Poor prognosis associated gene set in \n fibroblasts from normal tissue only")
 
 
 #-----------------------------------------------------------------------------------------------------#
 #                                                                                                     #
-#       Loading and Scoring CAF and MSC Gene Signatures in Colorectal Fibroblast Clusters and         #
-#                                 Visualizing Their Enrichment                                        #
+#                 Scoring CAF and MSC Gene Signatures in Colorectal Fibroblast Clusters               #
 #                                                                                                     #
 #-----------------------------------------------------------------------------------------------------#
 library(readxl)
@@ -178,5 +177,202 @@ ds.fbst <- AddModuleScore(ds.fbst, features = MSC, name = "MSC", seed = 42)
 
 FeaturePlot(ds.fbst, features = c("iCAF1","myCAF1","mesCAF1", "MSC1")) 
 VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0, features = c("iCAF1","myCAF1","mesCAF1", "MSC1"))
+
+
+#-----------------------------------------------------------------------------------------------------#
+#                                                                                                     #
+#        Visualization of rCAF and General CAF Markers in Colorectal Fibroblast Clusters              #
+#                                                                                                     #
+#-----------------------------------------------------------------------------------------------------#
+# Ref for rCAF markers: Cancer Sci. 2020 Apr;111(4):1047-1057. [rCAF: Tumor repressive CAF]
+rCAF.marker <- c("IKBKB", "SMAD7", "SMURF1", "ISLR", "NGFR")
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0.05, features = rCAF.marker)
+ 
+# Ref for general CAF markers: Biomark Res. 2020 Nov 11;8(1):64
+CAF.marker <- c('FAP', 'PDPN', 'CXCL12', 'PDGFRA', 'POSTN', 'S100A4')
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0.05, features = CAF.marker)
+
+CAF.marker2 <- c("FAP", "VCAN", "COL1A2", "TWIST1", "PRRX1", "LRRC15")
+VlnPlot(ds.fbst,  group.by = "cluster", pt.size = 0.02, features = CAF.marker2)
+
+
+#-----------------------------------------------------------------------------------------------------#
+#                                                                                                     #
+#    Expression Analysis of Myofibroblast and Colonic Mucosal Fibroblast Markers in Colorectal        #
+#                                Fibroblast Clusters                                                  #
+#                                                                                                     #
+#-----------------------------------------------------------------------------------------------------#
+# Ref for colonic mucosal fibroblast markers: Cancer Sci. 2020 Apr;111(4):1047-1057.
+myofibroblast.marker <- c("ACTA2", "TAGLN", "MYH11", "ACTG2")
+pericyte.marker <- c('RGS5')
+CBF.marker <- c('GREM1', 'RSPO3', 'WNT2B')  # crypt bottom fibroblast
+CTF.marker <- c('PDGFRA', 'BMP2', 'BMP3', 'BMP7', 'WNT5A', 'WNT5B')  # crypt top fibroblast
+Fbst.diff.marker <- c('EBF1', 'THY1', 'ADAMDEC1')
+
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0.00, features = myofibroblast.marker)
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0.01, features = pericyte.marker)
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0.01, features = CBF.marker)
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0.01, features = CTF.marker)
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0.01, features = Fbst.diff.marker)
+
+
+#-----------------------------------------------------------------------------------------------------#
+#                                                                                                     #
+#          Visualization of Colon Fibroblast Gene Sets from Healthy and UC Patients (GSE114374)       #
+#                             Ref: Cell 2018 Oct 4;175(2):372-386.e17.                                #
+#                                                                                                     #
+#-----------------------------------------------------------------------------------------------------#
+load("data/GSE114374_human_colon_fbst_geneset.RData")
+GSE114374_10X_Healthy           # classification of colon fibroblast from healthy human (10X platform)
+S1_10X.gset <- list(c(GSE114374_10X_Healthy$S1_H_10X))
+S2_10X.gset <- list(c(GSE114374_10X_Healthy$S2_H_10X))
+S3_10X.gset <- list(c(GSE114374_10X_Healthy$S3_H_10X))
+S4_10X.gset <- list(c(GSE114374_10X_Healthy$S4_H_10X))
+MF_10X.gset <- list(c(GSE114374_10X_Healthy$MF_H_10X))
+S2a.gset <- list(c(GSE114374_10X_Healthy$S2a))
+S2b.gset <- list(c(GSE114374_10X_Healthy$S2b))
+S2a_specific.gset <- list(c(GSE114374_10X_Healthy$S2a_specific))
+S2b_specific.gset <- list(c(GSE114374_10X_Healthy$S2b_specific))
+
+ds.fbst <- AddModuleScore(ds.fbst, features = S1_10X.gset, name = "S1_10X", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S2_10X.gset, name = "S2_10X", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S3_10X.gset, name = "S3_10X", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S4_10X.gset, name = "S4_10X", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = MF_10X.gset, name = "MF_10X", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S2a.gset, name = "S2a", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S2b.gset, name = "S2b", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S2a_specific.gset, name = "S2a_specific", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S2b_specific.gset, name = "S2b_specific", seed = 42)
+VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0, 
+                 features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
+                              "S2b1", "S2a_specific1", "S2b_specific1"))
+FeaturePlot(ds.fbst, features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
+                                  "S2b1", "S2a_specific1", "S2b_specific1"))
+
+ds.NF <- AddModuleScore(ds.NF, features = S1_10X.gset, name = "S1_10X", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S2_10X.gset, name = "S2_10X", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S3_10X.gset, name = "S3_10X", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S4_10X.gset, name = "S4_10X", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = MF_10X.gset, name = "MF_10X", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S2a.gset, name = "S2a", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S2b.gset, name = "S2b", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S2a_specific.gset, name = "S2a_specific", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S2b_specific.gset, name = "S2b_specific", seed = 42)
+VlnPlot(ds.NF, pt.size = 0, 
+                 features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
+                              "S2b1", "S2a_specific1", "S2b_specific1"))
+FeaturePlot(ds.NF, features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
+                                  "S2b1", "S2a_specific1", "S2b_specific1"))
+
+ds.CAF <- AddModuleScore(ds.CAF, features = S1_10X.gset, name = "S1_10X", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S2_10X.gset, name = "S2_10X", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S3_10X.gset, name = "S3_10X", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S4_10X.gset, name = "S4_10X", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = MF_10X.gset, name = "MF_10X", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S2a.gset, name = "S2a", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S2b.gset, name = "S2b", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S2a_specific.gset, name = "S2a_specific", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S2b_specific.gset, name = "S2b_specific", seed = 42)
+VlnPlot(ds.CAF, pt.size = 0, 
+                 features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
+                              "S2b1", "S2a_specific1", "S2b_specific1"))
+FeaturePlot(ds.CAF, features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
+                                "S2b1", "S2a_specific1", "S2b_specific1"))
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+GSE114374_C1_UC               # classification of colon fibroblast from UC patients (C1 platform)
+S1_UC.gset <- list(c(GSE114374_C1_UC$S1_UC_C1))
+S2_UC.gset <- list(c(GSE114374_C1_UC$S2_UC_C1))
+S3_UC.gset <- list(c(GSE114374_C1_UC$S3_UC_C1))
+S4_UC.gset <- list(c(GSE114374_C1_UC$S4_UC_C1))
+MF_UC.gset <- list(c(GSE114374_C1_UC$MF_UC_C1))
+
+ds.fbst <- AddModuleScore(ds.fbst, features = S1_UC.gset, name = "S1_UC", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S2_UC.gset, name = "S2_UC", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S3_UC.gset, name = "S3_UC", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S4_UC.gset, name = "S4_UC", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = MF_UC.gset, name = "MF_UC", seed = 42)
+VlnPlot(ds.fbst, pt.size = 0, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"))
+FeaturePlot(ds.fbst, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"), ncol = 3)
+
+ds.NF <- AddModuleScore(ds.NF, features = S1_UC.gset, name = "S1_UC", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S2_UC.gset, name = "S2_UC", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S3_UC.gset, name = "S3_UC", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S4_UC.gset, name = "S4_UC", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = MF_UC.gset, name = "MF_UC", seed = 42)
+VlnPlot(ds.NF, pt.size = 0, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"))
+FeaturePlot(ds.NF, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"), ncol = 3)
+
+ds.CAF <- AddModuleScore(ds.CAF, features = S1_UC.gset, name = "S1_UC", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S2_UC.gset, name = "S2_UC", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S3_UC.gset, name = "S3_UC", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S4_UC.gset, name = "S4_UC", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = MF_UC.gset, name = "MF_UC", seed = 42)
+VlnPlot(ds.CAF, pt.size = 0, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"))
+FeaturePlot(ds.CAF, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"), ncol = 3)
+ggsave("results.02/03.CAF_cluster-2.characterization/07.GSE114374_ds.CAF-4.png", height = 8, width = 14)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+GSE114374_C1_Healthy       # classification of colon fibroblast from healthy human (C1 platform)
+S1_healthy_C1.gset <- list(c(GSE114374_C1_Healthy$S1_H_C1))
+S2_healthy_C1.gset <- list(c(GSE114374_C1_Healthy$S2_H_C1))
+S3_healthy_C1.gset <- list(c(GSE114374_C1_Healthy$S3_H_C1))
+MF_healthy_C1.gset <- list(c(GSE114374_C1_Healthy$MF_H_C1))
+
+ds.fbst <- AddModuleScore(ds.fbst, features = S1_healthy_C1.gset, name = "S1_H_C1", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S2_healthy_C1.gset, name = "S2_H_C1", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = S3_healthy_C1.gset, name = "S3_H_C1", seed = 42)
+ds.fbst <- AddModuleScore(ds.fbst, features = MF_healthy_C1.gset, name = "MF_H_C1", seed = 42)
+VlnPlot(ds.fbst, pt.size = 0, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 4)
+FeaturePlot(ds.fbst, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 2)
+
+ds.NF <- AddModuleScore(ds.NF, features = S1_healthy_C1.gset, name = "S1_H_C1", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S2_healthy_C1.gset, name = "S2_H_C1", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = S3_healthy_C1.gset, name = "S3_H_C1", seed = 42)
+ds.NF <- AddModuleScore(ds.NF, features = MF_healthy_C1.gset, name = "MF_H_C1", seed = 42)
+VlnPlot(ds.NF, pt.size = 0, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 4)
+FeaturePlot(ds.NF, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 2)
+
+ds.CAF <- AddModuleScore(ds.CAF, features = S1_healthy_C1.gset, name = "S1_H_C1", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S2_healthy_C1.gset, name = "S2_H_C1", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = S3_healthy_C1.gset, name = "S3_H_C1", seed = 42)
+ds.CAF <- AddModuleScore(ds.CAF, features = MF_healthy_C1.gset, name = "MF_H_C1", seed = 42)
+VlnPlot(ds.CAF, pt.size = 0, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 4)
+FeaturePlot(ds.CAF, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 2)
+
+
+#-----------------------------------------------------------------------------------------------------#
+#                                                                                                     #
+#     Identification and Visualization of Differentially Expressed Genes in Fibroblast Clusters       #
+#                                                                                                     #
+#-----------------------------------------------------------------------------------------------------#
+library(data.table)
+colGEX = c("grey85", brewer.pal(7, "Reds"))  
+nClust <- uniqueN(Idents(ds.fbst))         # Setup color palette
+colCls <- colorRampPalette(brewer.pal(n = 10, name = "Paired"))(nClust)
+
+oupMarker <- FindAllMarkers(ds.fbst, only.pos = TRUE, 
+                            logfc.threshold = 1.0, min.pct = 0.2)
+oupMarker <- data.table(oupMarker)
+oupMarker$pct.diff = oupMarker$pct.1 - oupMarker$pct.2
+oupMarker <- oupMarker[, c("cluster","gene","avg_log2FC","pct.1","pct.2",
+                           "pct.diff","p_val","p_val_adj")]
+ds.fbst@misc$marker <- oupMarker      # Store markers into Seurat object
+
+# Get top genes for each cluster and do dotplot / violin plot
+oupMarker$cluster = factor(oupMarker$cluster)
+oupMarker = oupMarker[order(-oupMarker$avg_log2FC),]
+oupMarker %>% group_by(cluster) %>% top_n(5, wt=avg_log2FC) %>% 
+  arrange(cluster) %>% pull(gene) -> genes.to.plot
+
+DotPlot(ds.fbst, group.by = "cluster", features = genes.to.plot) +
+    coord_flip() + scale_color_gradientn(colors = colGEX) +
+    theme(axis.text.x = element_text(angle = -45, hjust = 0))
+VlnPlot(ds.fbst, group.by = "cluster", fill.by = "ident", cols = colCls, features = genes.to.plot, stack = TRUE, flip = TRUE) 
+
+
+
+
+
+
 
 
