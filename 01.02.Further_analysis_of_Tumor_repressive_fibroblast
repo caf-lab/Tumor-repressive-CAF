@@ -249,35 +249,6 @@ VlnPlot(ds.fbst, group.by = "cluster", pt.size = 0,
 FeaturePlot(ds.fbst, features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
                                   "S2b1", "S2a_specific1", "S2b_specific1"))
 
-ds.NF <- AddModuleScore(ds.NF, features = S1_10X.gset, name = "S1_10X", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S2_10X.gset, name = "S2_10X", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S3_10X.gset, name = "S3_10X", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S4_10X.gset, name = "S4_10X", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = MF_10X.gset, name = "MF_10X", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S2a.gset, name = "S2a", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S2b.gset, name = "S2b", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S2a_specific.gset, name = "S2a_specific", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S2b_specific.gset, name = "S2b_specific", seed = 42)
-VlnPlot(ds.NF, pt.size = 0, 
-                 features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
-                              "S2b1", "S2a_specific1", "S2b_specific1"))
-FeaturePlot(ds.NF, features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
-                                  "S2b1", "S2a_specific1", "S2b_specific1"))
-
-ds.CAF <- AddModuleScore(ds.CAF, features = S1_10X.gset, name = "S1_10X", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S2_10X.gset, name = "S2_10X", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S3_10X.gset, name = "S3_10X", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S4_10X.gset, name = "S4_10X", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = MF_10X.gset, name = "MF_10X", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S2a.gset, name = "S2a", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S2b.gset, name = "S2b", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S2a_specific.gset, name = "S2a_specific", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S2b_specific.gset, name = "S2b_specific", seed = 42)
-VlnPlot(ds.CAF, pt.size = 0, 
-                 features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
-                              "S2b1", "S2a_specific1", "S2b_specific1"))
-FeaturePlot(ds.CAF, features = c("S1_10X1","S2_10X1","S3_10X1", "S4_10X1", "MF_10X1", "S2a1",
-                                "S2b1", "S2a_specific1", "S2b_specific1"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 GSE114374_C1_UC               # classification of colon fibroblast from UC patients (C1 platform)
 S1_UC.gset <- list(c(GSE114374_C1_UC$S1_UC_C1))
@@ -294,23 +265,6 @@ ds.fbst <- AddModuleScore(ds.fbst, features = MF_UC.gset, name = "MF_UC", seed =
 VlnPlot(ds.fbst, pt.size = 0, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"))
 FeaturePlot(ds.fbst, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"), ncol = 3)
 
-ds.NF <- AddModuleScore(ds.NF, features = S1_UC.gset, name = "S1_UC", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S2_UC.gset, name = "S2_UC", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S3_UC.gset, name = "S3_UC", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S4_UC.gset, name = "S4_UC", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = MF_UC.gset, name = "MF_UC", seed = 42)
-VlnPlot(ds.NF, pt.size = 0, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"))
-FeaturePlot(ds.NF, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"), ncol = 3)
-
-ds.CAF <- AddModuleScore(ds.CAF, features = S1_UC.gset, name = "S1_UC", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S2_UC.gset, name = "S2_UC", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S3_UC.gset, name = "S3_UC", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S4_UC.gset, name = "S4_UC", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = MF_UC.gset, name = "MF_UC", seed = 42)
-VlnPlot(ds.CAF, pt.size = 0, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"))
-FeaturePlot(ds.CAF, features = c("S1_UC1","S2_UC1","S3_UC1", "S4_UC1", "MF_UC1"), ncol = 3)
-ggsave("results.02/03.CAF_cluster-2.characterization/07.GSE114374_ds.CAF-4.png", height = 8, width = 14)
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 GSE114374_C1_Healthy       # classification of colon fibroblast from healthy human (C1 platform)
 S1_healthy_C1.gset <- list(c(GSE114374_C1_Healthy$S1_H_C1))
@@ -324,20 +278,6 @@ ds.fbst <- AddModuleScore(ds.fbst, features = S3_healthy_C1.gset, name = "S3_H_C
 ds.fbst <- AddModuleScore(ds.fbst, features = MF_healthy_C1.gset, name = "MF_H_C1", seed = 42)
 VlnPlot(ds.fbst, pt.size = 0, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 4)
 FeaturePlot(ds.fbst, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 2)
-
-ds.NF <- AddModuleScore(ds.NF, features = S1_healthy_C1.gset, name = "S1_H_C1", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S2_healthy_C1.gset, name = "S2_H_C1", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = S3_healthy_C1.gset, name = "S3_H_C1", seed = 42)
-ds.NF <- AddModuleScore(ds.NF, features = MF_healthy_C1.gset, name = "MF_H_C1", seed = 42)
-VlnPlot(ds.NF, pt.size = 0, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 4)
-FeaturePlot(ds.NF, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 2)
-
-ds.CAF <- AddModuleScore(ds.CAF, features = S1_healthy_C1.gset, name = "S1_H_C1", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S2_healthy_C1.gset, name = "S2_H_C1", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = S3_healthy_C1.gset, name = "S3_H_C1", seed = 42)
-ds.CAF <- AddModuleScore(ds.CAF, features = MF_healthy_C1.gset, name = "MF_H_C1", seed = 42)
-VlnPlot(ds.CAF, pt.size = 0, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 4)
-FeaturePlot(ds.CAF, features = c("S1_H_C11","S2_H_C11","S3_H_C11", "MF_H_C11"), ncol = 2)
 
 
 #-----------------------------------------------------------------------------------------------------#
