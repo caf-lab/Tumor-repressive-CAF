@@ -1,3 +1,6 @@
+## file path: /home/hero/data1/CAF-lab/Project/22.04-Tumor-suppressive_CAF/single_cell_data_analysis/E-MTAB-8107/scripts.01
+## file name: "01.Good_CAF_survival_2023.08.31.Rmd"
+
 ---
 title: "Identification of Tumor-Repressive Fibroblasts in Colorectal Cancer Using scRNA-seq Data and Survival Analysis in TCGA Dataset"
 author: "Seok-hyung Kim"
