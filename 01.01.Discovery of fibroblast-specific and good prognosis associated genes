@@ -1,1 +1,94 @@
+library(dplyr)
+library(Seurat)
+library(cowplot)
+library(Matrix)
+library(patchwork)
+library(ggplot2)
 
+#------------------------------------------------------------------------------#
+#                                                                              #
+#     Import colorectal cancer scRNA-seq data and associated datasets          #
+#                                                                              #
+#------------------------------------------------------------------------------#
+# Import E-MTAB-7107 colorectal single-cell RNA-sequencing (scRNA-seq) data ----
+ds <-readRDS("output/CRC_final_2022-09-05.rds")
+
+# Import precomputed fibroblast-gene correlation data derived from E-MTAB-7107 data
+DEG1 <- read.csv("results/04.CRC_fbst_vs_all.other.cells.csv", stringsAsFactors = F)
+DEG1 <- rename(DEG1, "gene_symbol" = "X")
+
+# Import precomputed TCGA colon adenocarcinoma patient survival data for each gene
+survival <- read.table("data/TCGA.colon.CA-survival.txt", sep = "\t",header = T, stringsAsFactors = F)
+
+# Merge files ('DEG1' + 'survival')
+DEG1 <- left_join(DEG1, survival, by="gene_symbol")   
+
+# Identify genes highly specific to fibroblasts and that also show a strong correlation with survival.
+DEG1 %>% filter(avg_log2FC >0.25) %>% arrange(desc(avg_log2FC)) -> DEG1 #1291
+DEG1 %>% filter(OS.pvalue < 0.05) %>% summarise(n())  # 604
+
+# Futher identify genes which are associated with poor prognosis of colon cancer
+DEG1 %>% filter(OS.pvalue < 0.05 & OS.high > 0) %>% summarise(n()) #483
+
+# Further identify genes which are associated with good prognosis of colon cancer
+DEG1 %>% filter(OS.pvalue < 0.05 & OS.high < 0) %>% summarise(n()) #121
+DEG1 %>% filter(OS.pvalue < 0.05 & OS.high < 0) %>% arrange(OS.high)-> DEG1.good
+
+
+#------------------------------------------------------------------------------#
+#                                                                              #   
+#   Refine the list of positive prognostic genes in colon cancer by selecting  # 
+#         those that show an inverse correlation with Prrx1 expression.        #
+#                                                                              #  
+#------------------------------------------------------------------------------#
+# Extract fibroblast subset from scRNA-seq data"
+ds.fbst <- subset(ds, idents = c("fibroblast-1", "fibroblast-2", "fibroblast_stem-1", "fibroblast_stem-2") )
+# Extract Expression Matrix from ds.fbst
+full_matrix = as.matrix(ds.fbst@assays$RNA@data)  # 7872
+
+# Classify fibroblasts based on high vs low PRRX1 expression"
+PRRX1.idx <- which(row.names(full_matrix)=="PRRX1")
+Pr.high <- colnames(full_matrix)[full_matrix[PRRX1.idx, ] >=0.5 ]
+Pr.low <- colnames(full_matrix)[full_matrix[PRRX1.idx, ] == 0 ]
+
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = Pr.high,
+                    value = "PRRX1.high")
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = Pr.low,
+                    value = "PRRX1.low")
+
+# Identify differentially expressed genes (DEGs) between PRRX1-high and PRRX1-low fibroblasts.
+PRRX1.DEG <- FindMarkers(ds.fbst, ident.1 = "PRRX1.high",
+                         ident.2 = "PRRX1.low", logfc.threshold = 0.1) %>% arrange(avg_log2FC)
+PRRX1.DEG.neg <- PRRX1.DEG %>% filter(avg_log2FC < -0.2) 
+
+# Refine the list of good-prognosis genes by selecting those showing enrichment in PRRX1-low fibroblasts
+BP.gset.tmp <- intersect(DEG1.good$gene_symbol, row.names(PRRX1.DEG.neg))
+BP.gset.tmp
+  #[1] "SMPDL3A" "C8orf4" "EDNRB"  "CXCL14" "PDGFRA" "HAAO"  "ADAMDEC1" "CPM"     
+  #[9] "SSBP3"   "SLMAP"  "PCDH18" "ITIH5"  "RBP1"   "HES1"  "WLS"      "CD302"   
+  #[17] "PCNP"   "KCNN3"  "BCAP29" "MATN2"  "AHI1"   "EDIL3" "CITED2" 
+
+# Calculate module score for good-prognosis genes in fibroblasts 
+ ds.fbst <- AddModuleScore(ds.fbst, features = list('BP-fbst.tmp' = BP.gset.tmp),name="BP-fbst.tmp")
+# Visualize the module score distribution in fibroblasts.
+ FeaturePlot(ds.fbst, features = c("BP-fbst.tmp1"))
+# Calculate module score for good-prognosis genes in all cells 
+ ds <- AddModuleScore(ds, features = list('BP-fbst.tmp' = BP.gset.tmp),name="BP-fbst.tmp")
+# Visualize the module score distribution in all cells.
+ FeaturePlot(ds, features = c("BP-fbst.tmp1"))
+
+#------------------------------------------------------------------------------#
+#                                                                              #
+#  Refine the list of good-prognosis genes by analyzing their spatial          #
+#        expression patterns in the single-cell RNA-seq UMAP,                  # 
+#               focusing on fibroblast-enriched regions                        #
+#                                                                              #
+#------------------------------------------------------------------------------#
+FeaturePlot(ds, features = BP.gset.tmp[1:9])
+FeaturePlot(ds, features = BP.gset.tmp[10:14])
+# Final fibroblast specific gene set associated with good prognosis 
+# [1] "SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
+# [8] "ITIH5",   "RBP1",   "HES1",  "KCNN3",   "MATN2",  "EDIL3",    "CITED2", 
+# [9] "PROCR"
