@@ -1,0 +1,304 @@
+date() # [1] "Thu Oct 20 08:44:31 2022"
+
+library(dplyr)
+library(Seurat)
+library(ggplot2)
+library(GSVA)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+
+##################################################################################
+#                                                                                #
+#            Import pre-processed single cell RNA-seq (E-MATB 8107)              #
+#                                                                                #
+##################################################################################
+ds <-readRDS("output/CRC_final_2022-09-05.rds")
+  # CRC_final_2022-09-05.rds: pre-processed single cell RNA-seq (E-MATB 8107)   
+ds.fbst <- subset(ds, idents = c("fibroblast-1", "fibroblast-2", "fibroblast_stem-1", "fibroblast_stem-2") )
+
+# GP.gset : Good prognosis-fibrosis associated geneset 
+GP.gset <- list(c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
+                  "ITIH5", "RBP1", "HES1", "KCNN3", "MATN2", "EDIL3","CITED2"))
+
+ds.fbst <- AddModuleScore(ds.fbst, features = GP.gset, name = "GP.fbst", seed = 42)
+
+meta <- ds.fbst@meta.data
+GP.gset.high <- row.names(meta)[meta[ ,"GP.fbst1"] > 0.5]
+GP.gset.low <- row.names(meta)[meta[ ,"GP.fbst1"] < -0.1]
+
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.high,
+                    value = "GP.gset.high")
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.low,
+                    value = "GP.gset.low")
+
+
+##################################################################################
+#                                                                                #
+#         DEGs between between good prognosis associated gene and others         #
+#                                                                                #
+##################################################################################
+library(annotables)
+grch38
+GP.DEG <- FindMarkers(ds.fbst, ident.1 = "GP.gset.high",
+                      ident.2 = "GP.gset.low") %>% arrange(desc(avg_log2FC))
+GP.DEG <- GP.DEG %>% tibble::rownames_to_column(var="symbol")
+
+GP.DEG %>% left_join(x = GP.DEG, 
+                 y = grch38[ , c("ensgene", "symbol", "description", "entrez")],
+                 by = "symbol") -> GP_temp
+GP.DEG <- GP_temp %>% filter(!is.na(entrez)) %>% filter(!duplicated(symbol)) %>%
+  tibble::column_to_rownames(var = "symbol") 
+rm(GP_temp)
+
+GP.DEG %>% filter(avg_log2FC >0.5 & p_val_adj <0.05 & !is.na(entrez)) %>% 
+  pull(entrez) %>% as.character() -> GP.high
+
+GP.DEG %>% arrange(desc(avg_log2FC)) %>%
+  filter(!is.na(entrez)) %>% dplyr::select(entrez, avg_log2FC) -> geneList.temp
+geneList.temp %>% pull(avg_log2FC) -> geneList_1
+names(geneList_1) <- geneList.temp$entrez
+geneList_1 <- geneList_1[!duplicated(names(geneList_1))==TRUE] 
+rm(geneList.temp) 
+
+###################################################################################
+#                                                                                 #
+#                    Pathway analysis using clusterProfiler                       #
+#                                                                                 #
+###################################################################################
+clusterProfiler : Wu et al (2021). The Innovation, 2(3), 100141. 
+                 Yu G et al (2012). A Journal of Integrative Biology, 16(5), 284-287.
+#000000000000000000000000000000# Gene ontology #00000000000000000000000000000000000#
+ego <- enrichGO(gene          = GP.high,
+                OrgDb         = org.Hs.eg.db,
+                ont           = "CC",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+head(ego)
+goplot(ego)  
+ego %>% as.data.frame() 
+Fit <- plot(barplot(ego, showCategory = 20))
+print(Fit)
+
+ego <- enrichGO(gene          = GP.high,
+                OrgDb         = org.Hs.eg.db,
+                ont           = "BP",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+goplot(ego)  
+ego@result %>% as.data.frame() 
+Fit <- plot(barplot(ego, showCategory = 20))
+print(Fit)
+
+ego <- enrichGO(gene          = GP.high,
+                OrgDb         = org.Hs.eg.db,
+                ont           = "MF",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+goplot(ego)   
+ego@result %>% as.data.frame() 
+
+# https://support.bioconductor.org/p/99810/
+ego3 <- gseGO(geneList     = geneList_1.dedup,
+              OrgDb        = org.Hs.eg.db,
+              ont          = "CC",
+              minGSSize    = 100,
+              maxGSSize    = 500,
+              pvalueCutoff = 0.05,
+              verbose      = FALSE)
+goplot(ego3)   # 01-2.gseGO-CC-fibt_stem-2_vs_fbst-1.pdf
+ego3@result %>% as.data.frame() %>% arrange(desc(NES))
+
+ego3 <- gseGO(geneList     = geneList_1.dedup,
+              OrgDb        = org.Hs.eg.db,
+              ont          = "BP",
+              minGSSize    = 100,
+              maxGSSize    = 500,
+              pvalueCutoff = 0.05,
+              verbose      = FALSE)
+goplot(ego3)  
+ego3@result %>% as.data.frame() %>% arrange(desc(NES)) 
+
+ego3 <- gseGO(geneList     = geneList_1.dedup,
+              OrgDb        = org.Hs.eg.db,
+              ont          = "MF",
+              minGSSize    = 100,
+              maxGSSize    = 500,
+              pvalueCutoff = 0.05,
+              verbose      = FALSE)
+goplot(ego3)   
+ego3@result %>% as.data.frame() %>% arrange(desc(NES)) 
+
+#0000000000000000000000000000#--- ReactomePA ----#00000000000000000000000000000000000#
+library(ReactomePA)
+x <- enrichPathway(gene=GP.high, pvalueCutoff = 0.05, readable=TRUE)
+head(x)
+x@result %>% as.data.frame() -> result1.1
+
+y <- gsePathway(geneList_1.dedup, 
+                pvalueCutoff = 0.2,
+                pAdjustMethod = "BH", 
+                verbose = FALSE)
+head(y)
+y %>% as.data.frame() 
+
+viewPathway("Extracellular matrix organization", 
+            readable = TRUE, 
+            foldChange = geneList_1.dedup)
+
+viewPathway("RHO GTPase Effectors", 
+            readable = TRUE, 
+            foldChange = geneList_1.dedup)
+
+viewPathway("GPCR ligand binding", 
+            readable = TRUE, 
+            foldChange = geneList_1.dedup)
+
+
+#00000000000000000000#--- MeSH enrichment analysis ----#000000000000000000000000000000#
+library(AnnotationHub)
+BiocManager::install("MeSHDbi")
+library(MeSHDbi)
+ah <- AnnotationHub(localHub=FALSE)
+hsa <- query(ah, c("MeSHDb", "Homo sapiens"))
+file_hsa <- hsa[[1]]
+db <- MeSHDbi::MeSHDb(file_hsa)
+
+BiocManager::install("meshes")
+library(meshes)
+x <- enrichMeSH(GP.high, MeSHDb = db, database='gendoo', category = 'C')
+x@result %>% as.data.frame() -> 
+
+y <- gseMeSH(geneList_1.dedup, MeSHDb = db, database = 'gene2pubmed', category = "G")
+head(y)
+y@result %>% as.data.frame() -> 
+
+
+#####  msigdb ANALYSIS ---------------------------------------------------------
+# https://cran.r-project.org/web/packages/msigdbr/vignettes/msigdbr-intro.html
+install.packages("msigdbr")
+library(msigdbr)
+msigdbr_show_species()
+m_df <- msigdbr(species = "Homo sapiens")
+head(m_df, 2) %>% as.data.frame
+unique(m_df$gs_subcat)
+  #     gs_cat       gs_subcat
+  #        H                      hallmark gene sets
+  #       C1                      positional gene sets
+  #       C2             CGP      chemical and genetic pertubation
+  #       C2              CP      canonical pathway
+  #       C2          CP:PID
+  #       C2     CP:REACTOME
+  #       C2 CP:WIKIPATHWAYS
+  #       C2         CP:KEGG
+  #       C2     CP:BIOCARTA
+  #       C3  MIR:MIR_Legacy     regulatory gene sets-microRNA
+  #       C3       MIR:MIRDB
+  #       C3        TFT:GTRD     regulatory gene sets-transcription factor targets
+  #       C3  TFT:TFT_Legacy
+  #       C4             CGN     computational gene sets-cancer gene neighborhoods
+  #       C4              CM     computational gene sets-cancer modules
+  #       C5           GO:BP
+  #       C5           GO:CC
+  #       C5           GO:MF
+  #       C5             HPO     gene ontology-human phenotype ontology
+  #       C6                     oncogenic gene sets
+  #       C7     IMMUNESIGDB         
+  #       C7             VAX
+  #       C8                     cell type signature gene sets
+
+m_t2g <- m_df %>% dplyr::select(gs_name, entrez_gene)
+em <- enricher(GP.high, TERM2GENE=m_t2g)
+em %>% as.data.frame() 
+
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = m_t2g)
+em2 %>% as.data.frame() 
+
+C2CP_t2g <- msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP") %>%
+  dplyr::select(gs_name, entrez_gene)
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C2CP_t2g)
+em2 %>% as.data.frame() 
+
+C2CGP_t2g <- msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CGP") %>%
+  dplyr::select(gs_name, entrez_gene)
+em <- enricher(GP.high, TERM2GENE=C2CGP_t2g)
+em %>% as.data.frame() 
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C2CGP_t2g)
+em2 %>% as.data.frame() 
+
+C3MIR_t2g <- msigdbr(species = "Homo sapiens", category = "C3", subcategory = "MIR:MIRDB") %>%
+  dplyr::select(gs_name, entrez_gene)
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C3MIR_t2g)
+em2 %>% as.data.frame() 
+
+C3TF_legacy_t2g <- msigdbr(species = "Homo sapiens", category = "C3", subcategory = "TFT:TFT_Legacy") %>% 
+  dplyr::select(gs_name, entrez_gene)
+em <- enricher(GP.high, TERM2GENE=C3TF_legacy_t2g)
+em %>% as.data.frame() -> result1.1
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C3TF_legacy_t2g)
+em2 %>% as.data.frame() -> result1.1
+write.csv(result1.1, "results.01/02.msigdb_C3TF.1.csv")
+
+C3TF_GTRD_t2g <- msigdbr(species = "Homo sapiens", category = "C3", subcategory = "TFT:GTRD") %>% 
+  dplyr::select(gs_name, entrez_gene)
+em <- enricher(GP.high, TERM2GENE=C3TF_GTRD_t2g)
+em %>% as.data.frame() 
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C3TF_GTRD_t2g)
+em2 %>% as.data.frame() 
+
+C4CGN_t2g <- msigdbr(species = "Homo sapiens", category = "C4", subcategory = "CGN") %>%
+  dplyr::select(gs_name, entrez_gene)
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C4CGN_t2g)
+em2 %>% as.data.frame() 
+write.csv(result1.1, "results.01/02.msigdb_C4CGN.1.csv")
+
+C4CM_t2g <- msigdbr(species = "Homo sapiens", category = "C4", subcategory = "CM") %>%
+  dplyr::select(gs_name, entrez_gene)
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C4CM_t2g)
+em2 %>% as.data.frame() 
+write.csv(result1.1, "results.01/02.msigdb_C4CM.1.csv")
+
+C5HPO_t2g <- msigdbr(species = "Homo sapiens", category = "C5", subcategory = "HPO") %>%
+  dplyr::select(gs_name, entrez_gene)
+em <- enricher(GP.high, TERM2GENE=C5HPO_t2g)
+em %>% as.data.frame() 
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C5HPO_t2g)
+em2 %>% as.data.frame() 
+
+C6_t2g <- msigdbr(species = "Homo sapiens", category = "C6") %>%
+  dplyr::select(gs_name, entrez_gene)
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C6_t2g)
+em2 %>% as.data.frame() 
+
+C7_t2g <- msigdbr(species = "Homo sapiens", category = "C7") %>%
+  dplyr::select(gs_name, entrez_gene)
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C7_t2g)
+em2 %>% as.data.frame() 
+write.csv(result1.1, "results.01/02.msigdb_C7.1.csv")
+
+C8_t2g <- msigdbr(species = "Homo sapiens", category = "C8") %>%
+  dplyr::select(gs_name, entrez_gene)
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = C8_t2g)
+em2 %>% as.data.frame() 
+
+H_t2g <- msigdbr(species = "Homo sapiens", category = "H") %>%
+  dplyr::select(gs_name, entrez_gene)
+em <- enricher(GP.high, TERM2GENE=H_t2g)
+em %>% as.data.frame() 
+em2 <- GSEA(geneList_1.dedup, TERM2GENE = H_t2g)
+em2 %>% as.data.frame() 
+
+
+
+
+
+
+
+
