@@ -9,14 +9,15 @@ library(org.Hs.eg.db)
 
 ##################################################################################
 #                                                                                #
-#            Import pre-processed single cell RNA-seq (E-MATB 8107)              #
+#      Import pre-processed colon cancer single cell RNA-seq (E-MATB 8107)       #
 #                                                                                #
 ##################################################################################
+# CRC_final_2022-09-05.rds: pre-processed colon cancer single cell RNA-seq (E-MATB 8107)
 ds <-readRDS("output/CRC_final_2022-09-05.rds")
   # CRC_final_2022-09-05.rds: pre-processed single cell RNA-seq (E-MATB 8107)   
 ds.fbst <- subset(ds, idents = c("fibroblast-1", "fibroblast-2", "fibroblast_stem-1", "fibroblast_stem-2") )
 
-# GP.gset : Good prognosis-fibrosis associated geneset 
+# GP.gset : Good prognosis-associated and fibroblast-specific gene set 
 GP.gset <- list(c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
                   "ITIH5", "RBP1", "HES1", "KCNN3", "MATN2", "EDIL3","CITED2"))
 
@@ -36,7 +37,7 @@ ds.fbst <- SetIdent(object = ds.fbst,
 
 ##################################################################################
 #                                                                                #
-#         DEGs between between good prognosis associated gene and others         #
+#    DEGs between good prognosis associated fibroblasts and other fibroblasts    #
 #                                                                                #
 ##################################################################################
 library(annotables)
