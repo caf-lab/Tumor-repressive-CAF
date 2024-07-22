@@ -1,1 +1,42 @@
+# file path: /media/hero/Seagate Backup Plus Drive/Prrx1-data1/Prrx1-Part3/04
+# file name: "05.human.colon.CAF-master.TF_TCGA.survival.R"
 
+library(dplyr)
+library(ggplot2)
+library("maxstat")
+library("survival")
+
+
+load("data/CRC_expression_os.rda") 
+
+CRC_expression = CRC_expression[-247, ]   # 247'th data about "ADARB2" is too low level and make an error
+
+write.csv(rownames(CRC_expression), "data/geneList.csv")
+
+#-------------------------------------------------------------------------------------------#
+#########   Survival anlaysis (Large scale application)  cut off : Lower 25%  ###############
+#-------------------------------------------------------------------------------------------#
+gene_symbol <- vector()
+OS.pvalue <- vector()   #OS : overall survival
+OS.high <- vector()   # (+) value ==> patient whose level is over threshold is more likely to die.
+
+# tryCatch : command to proceed the loop to the end even though error occurrs in the middle.
+# ref of tryCatch : https://stackoverflow.com/questions/28859100/r-grouping-error-in-survdiff-function
+# ref of tryCatch : https://stackoverflow.com/questions/8093914/use-trycatch-skip-to-next-value-of-loop-upon-error
+
+for( i in 1:nrow(CRC_expression)) {
+  Pan_CDR_target_tmp <- data.frame(CRC_os, target=as.numeric(CRC_expression[i, ]))
+  mstat <- maxstat.test(Surv(as.numeric(OS.time), OS) ~ target, data=Pan_CDR_target_tmp,
+                        smethod="LogRank", pmethod="exactGauss",
+                        abseps=0.01)
+  set1 <-(Pan_CDR_target_tmp$target >= mstat$estimate)
+  s1 <- tryCatch(survdiff(Surv(OS.time, OS == 1)~set1, data=Pan_CDR_target_tmp), error=function(e) return(NA))
+  OS.pvalue[i] <- tryCatch(1-pchisq(s1$chisq, 1), error=function(e) return(NA))
+  OS.high[i] <- tryCatch(s1$obs[2]-s1$exp[2], error=function(e) return(NA))
+  gene_symbol[i] = rownames(CRC_expression)[i]
+}
+
+df <- data.frame(gene_symbol, OS.high, OS.pvalue)
+write.table(df, "results/TCGA.colon.CA-survival.txt", sep = "\t", col.names = T, row.names = F)
+
+### Related file : E:\BI\Survival_gene_signature_colonCA_GSE39582 ###
