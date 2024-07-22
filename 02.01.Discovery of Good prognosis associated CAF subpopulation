@@ -1,1 +1,127 @@
+## file path: /home/hero/data1/CAF-lab/Project/22.04-Tumor-suppressive_CAF/single_cell_data_analysis/E-MTAB-8107/scripts.01
+## file name: "01.Good_CAF_survival_2023.08.31.Rmd"
 
+---
+title: "Identification of Tumor-Repressive Fibroblasts in Colorectal Cancer Using scRNA-seq Data and Survival Analysis in TCGA Dataset"
+author: "Seok-hyung Kim"
+date: "2023-08-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading of R packages
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(Seurat)
+library(cowplot)
+library(Matrix)
+library(patchwork)
+library(ggplot2)
+library(GSVA)
+library("maxstat")
+library("survival")
+```
+
+## Import E-MTAB-7107 colorectal scRNA-seq data and isolate the fibroblast cell population.
+```{r}
+ds <-readRDS("../output/CRC_final_2022-09-05.rds")
+ds.fbst <- subset(ds, idents = c("fibroblast-1", "fibroblast-2", "fibroblast_stem-1", "fibroblast_stem-2") )
+ds.fbst@reductions$umap@cell.embeddings %>% as.data.frame() ->umap.value 
+toRemove <- umap.value %>% filter(UMAP_1 < 0 | UMAP_2 > -3.5) %>% rownames()
+ds.fbst <- ds.fbst[,!colnames(ds.fbst) %in% toRemove]
+```
+
+## Evaluate enrichment of good-prognosis genes within identified fibroblast subpopulations.
+```{r}
+rGP.gset <- list(c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
+                  "ITIH5", "RBP1", "HES1", "KCNN3", "MATN2", "EDIL3","CITED2", "PROCR"))
+ds.fbst <- AddModuleScore(ds.fbst, features = rGP.gset, name = "GP.fbst", seed = 42)
+```
+
+## Classify fibroblasts based on 'GP.fbst' module score
+```{r}
+meta <- ds.fbst@meta.data
+GP.gset.high <- row.names(meta)[meta[ ,"GP.fbst1"] > 0.5]
+GP.gset.low <- row.names(meta)[meta[ ,"GP.fbst1"] < -0.1]
+
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.high,
+                    value = "GP.gset.high")
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.low,
+                    value = "GP.gset.low")
+DimPlot(ds.fbst, label = F, cols = c("red", "blue", "grey", "grey", "grey", "grey"))
+```
+
+##  Identify upregulated genes in the fibroblast population showing high 'GP.fbst' module score
+```{r}
+GP.DEG <- FindMarkers(ds.fbst, ident.1 = "GP.gset.high",
+                         ident.2 = "GP.gset.low") %>% arrange(avg_log2FC)
+GP.DEG %>% filter(avg_log2FC > 2.1) %>% row.names() -> GP.markers 
+GP.markers
+```
+   [1] "PCDH18"  "AGT"     "CRYBG3"      "PTGER4"  "EPHA7"  "CYGB"    "INSC"        
+   [8] "MCTP1"   "DACH1"   "TAC3"        "COL4A5"  "ETS2"   "ABCC4"   "TMEM150C"    
+  [15] "P2RY14"  "CXCR4"   "WARS"        "RNU12"   "TCF21"  "PDGFD"   "NCAM1"       
+  [22] "TSLP"    "TM4SF1"  "PAPPA"       "MCTP2"   "HAAO"   "CXCL1"   "RP11-160E2.6"
+  [29] "DDHD1"   "FGFR4"   "CP"          "CCDC68"  "PDGFRA" "CCL7"    "LINC01082"   
+  [36] "CHL1"    "PROM1"   "C5orf66-AS1" "MATN2"   "PLAT"   "PCDH19"  "DLL1"        
+  [43] "TFPI2"   "SMPDL3A" "APOC1"       "ADGRL3"  "FENDRR" "GADD45G" "PTGER2"      
+  [50] "APOE"    "BMP4"    "CTSC"        "FABP5"   "ENHO"   "PITX1"   "CCL11"       
+  [57] "NRG1"    "ABCA8"   "VSTM2A"      "FAM150B" "EDIL3"  "RBP1"    "SLITRK6"     
+  [64] "F3"      "C8orf4"  "SOX6"        "PTCH1"   "DMKN"   "SFTA1P"  "TRPA1"       
+  [71] "EMID1"   "HSD17B2" "FAM105A"     "EDNRB"   "BMP5"   "NSG1"    "HAPLN1"      
+  [78] "ADAM28"  "STMN2"   "CCL8"        "CXCL14"  "CCL13"  "ADAMDEC1"   
+
+
+## Calculation of enrichment score of "GP.markers" in TCGA colorectal cancer RNA-seq dataset
+### "GP.markers": The list of upregulated genes in the fibroblast population showing high 'GP.fbst' module score
+```{r}
+# Convert GP.markers to a list format suitable for GSVA
+   gs <- list(GP_markers = GP.markers)
+# Load TCGA colorectal cancer RNA-seq dataset
+   load("../data/CRC_expression_os.rda") 
+   CRC_expression <- as.matrix(CRC_expression)
+# Perform GSVA to calculate enrichment scores
+   gsva.es <- gsva(CRC_expression, gs, method = "gsva", verbose = FALSE)
+# Display the dimensions of the resulting enrichment score matrix
+   dim(gsva.es) # [1]  1 607
+# Display the first few enrichment scores
+   gsva.es[1, 1:5]
+```
+
+
+
+## Survival Analysis Based on 'GP Markers' Enrichment Scores in TCGA Colorectal Cancer Dataset
+```{r}
+survival_cal = function(TARGET){
+  Pan_CDR_target_tmp <- data.frame(CRC_os, target=as.numeric(gsva.es[rownames(gsva.es)==TARGET, ]))
+  mstat <- maxstat.test(Surv(as.numeric(OS.time), OS) ~ target, data=Pan_CDR_target_tmp,
+                        smethod="LogRank", pmethod="exactGauss",
+                        abseps=0.01)
+  mstat$estimate
+  plot(mstat)
+  title(main= paste0(TARGET))
+  
+  set1 <-(Pan_CDR_target_tmp$target >= mstat$estimate)
+  aa <- survdiff(Surv(OS.time, OS == 1)~set1, data=Pan_CDR_target_tmp)
+  out.set1 <- survfit(Surv(OS.time, OS == 1) ~ set1, data=Pan_CDR_target_tmp)
+  
+  plot(out.set1, lty=1:2, col=c("red","blue"),
+       main = paste0(TARGET, "  P value= ", aa$pvalue),
+       xlab = "Days after diagnosis",
+       ylab = "Percentage of survival")
+  set1 <- factor(set1)
+  legend("topright", legend=levels(set1), col=c("red","blue"), lty=1:2)
+
+  P_value <- aa$pvalue
+  return(P_value)
+}
+```
+
+```{r}
+survival_cal("GP_markers")
+```
