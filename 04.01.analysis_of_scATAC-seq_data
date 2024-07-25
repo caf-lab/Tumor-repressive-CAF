@@ -27,7 +27,7 @@ subscript = "fbst"
 new_project_save_name <- "save.proj.Fbst2.SE"
 use_Regev_RNA <- FALSE
 # Define the steps above you want to execute
-execute_steps <- c(0,7,8,9,10,11)
+execute_steps <- c(1,2,3,4,5)
 
 #------------------------------------------------------------------------------------------#
 #                                                                                          #
