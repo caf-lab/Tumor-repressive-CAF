@@ -14,13 +14,13 @@ While activated fibroblasts and cancer-associated fibroblasts (CAFs) are well-kn
 
 [4] /data/CRC_expression_os.rda : This file stores both the TCGA colorectal cancer RNA-sequencing data and corresponding survival information. 
 
-[5] /signature/Human_iCAF_signature.xlsx : This Excel file likely contains a list of genes associated with iCAFs.
+[5] /signature/Human_iCAF_signature.xlsx : This Excel file contains a list of genes associated with iCAFs.
 
-[6] /signature/Human_myCAF_signature.xlsx : This Excel file likely contains a list of genes associated with myofibroblast cancer-associated fibroblasts (myCAFs).
+[6] /signature/Human_myCAF_signature.xlsx : This Excel file contains a list of genes associated with myofibroblast cancer-associated fibroblasts (myCAFs).
 
-[7] /signature/Human_mesCAF_signature.xlsx : This Excel file likely contains a list of genes associated with mesothelial cancer-associated fibroblasts (mesCAFs).
+[7] /signature/Human_mesCAF_signature.xlsx : This Excel file contains a list of genes associated with mesothelial cancer-associated fibroblasts (mesCAFs).
 
-[8] /signature/MSC_markers.csv : This CSV file likely contains a list of genes used to identify mesenchymal stem cells (MSCs).
+[8] /signature/MSC_markers.csv : This CSV file contains a list of genes used to identify mesenchymal stem cells (MSCs).
 
 [9] /data/GSE114374_human_colon_fbst_geneset.RData : This R data file contains multiple gene sets representing the subtype of colon fibroblasts from study GSE114374.
 
