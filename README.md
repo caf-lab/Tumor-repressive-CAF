@@ -3,25 +3,25 @@ Professor at Samsung medical center, department of pathology
 college of medicine, Sungkyunkwan University
 
 # Tumor-repressive-fibroblast subpopulation. 
-Generallly activated fibroblasts and CAF (cancer associated fibroblasts) are known to promote tumor progression. However, some minor subpopulation of fibroblast is suspected to repress tumor progression and there is little known for this subpopulation. In this study, we searched for tumor repressive fibroblasts subpopulation in cancer tissue of colon cancer using single cell RNA/ATAC-seq data.
+While activated fibroblasts and cancer-associated fibroblasts (CAFs) are well-known for promoting tumor progression, emerging evidence suggests the existence of a distinct fibroblast subpopulation with tumor-suppressive properties. However, our understanding of this subpopulation remains limited. This study aims to identify a tumor-repressive fibroblast subpopulation within colon cancer tissue using single-cell RNA and ATAC sequencing data.
 
-# Files required to run these codes 
-[1] /output/CRC_final_2022-09-05.rds : The processed file of E-MATB 7107 colorectal single cell data 
+# Files Required to Run the Analysis:
+[1] /output/CRC_final_2022-09-05.rds : This file contains the processed single-cell RNA-sequencing data for colorectal cancer patients from study E-MATB 7107. 
 
-[2] /results/04.CRC_fbst_vs_all.other.cells.csv : Fibroblast-specific genes calculated based on single cell RNA-seq data
+[2] /results/04.CRC_fbst_vs_all.other.cells.csv : This file lists genes specifically expressed in fibroblasts based on the single-cell RNA-seq data.
 
-[3] /data/TCGA.colon.CA-survival.txt : Genes that are signicantly associated with colorectal cancer patients' survival based on TCGA data
+[3] /data/TCGA.colon.CA-survival.txt : This file contains a list of genes significantly associated with colorectal cancer patient survival, derived from TCGA data. 
 
-[4] /data/CRC_expression_os.rda : TCGA colorectal cancer RNA-seq and survival files
+[4] /data/CRC_expression_os.rda : This file stores both the TCGA colorectal cancer RNA-sequencing data and corresponding survival information. 
 
-[5] /signature/Human_iCAF_signature.xlsx
+[5] /signature/Human_iCAF_signature.xlsx : This Excel file likely contains a list of genes associated with iCAFs.
 
-[6] /signature/Human_myCAF_signature.xlsx
+[6] /signature/Human_myCAF_signature.xlsx : This Excel file likely contains a list of genes associated with myofibroblast cancer-associated fibroblasts (myCAFs).
 
-[7] /signature/Human_mesCAF_signature.xlsx
+[7] /signature/Human_mesCAF_signature.xlsx : This Excel file likely contains a list of genes associated with mesothelial cancer-associated fibroblasts (mesCAFs).
 
-[8] /signature/MSC_markers.csv
+[8] /signature/MSC_markers.csv : This CSV file likely contains a list of genes used to identify mesenchymal stem cells (MSCs).
 
-[9] /data/GSE114374_human_colon_fbst_geneset.RData
+[9] /data/GSE114374_human_colon_fbst_geneset.RData : This R data file contains multiple gene sets representing the subtype of colon fibroblasts from study GSE114374.
 
-#### These 9 files are compressed into single file (8.3 GB). For this file, contact at platoshkim@gmail.com 
+#### Note: These nine files are compressed into a single archive (8.3 GB). For access to this compressed file, please contact platoshkim@gmail.com. 
