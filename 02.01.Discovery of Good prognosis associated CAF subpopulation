@@ -36,7 +36,7 @@ ds.fbst <- ds.fbst[,!colnames(ds.fbst) %in% toRemove]
 
 ## Evaluate enrichment of good-prognosis genes within identified fibroblast subpopulations.
 ```{r}
-rGP.gset <- list(c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
+rGP.gset <- list(c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", 
                   "ITIH5", "RBP1", "HES1", "KCNN3", "MATN2", "EDIL3","CITED2", "PROCR"))
 ds.fbst <- AddModuleScore(ds.fbst, features = rGP.gset, name = "GP.fbst", seed = 42)
 ```
@@ -98,7 +98,7 @@ GP.markers
 ## Survival Analysis Based on 'GP Markers' Enrichment Scores in TCGA Colorectal Cancer Dataset
 ```{r}
 survival_cal = function(TARGET){
-  Pan_CDR_target_tmp <- data.frame(CRC_os, target=as.numeric(gsva.es[rownames(gsva.es)==TARGET, ]))
+  Pan_CDR_target_tmp <- data.frame(CRC_os, target=as.numeric(CRC_expression[rownames(CRC_expression)==TARGET, ]))
   mstat <- maxstat.test(Surv(as.numeric(OS.time), OS) ~ target, data=Pan_CDR_target_tmp,
                         smethod="LogRank", pmethod="exactGauss",
                         abseps=0.01)
