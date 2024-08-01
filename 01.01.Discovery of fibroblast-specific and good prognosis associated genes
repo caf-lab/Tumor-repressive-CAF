@@ -89,6 +89,5 @@ BP.gset.tmp
 FeaturePlot(ds, features = BP.gset.tmp[1:9])
 FeaturePlot(ds, features = BP.gset.tmp[10:14])
 # Final fibroblast specific gene set associated with good prognosis 
-# [1] "SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "SLMAP",
-# [8] "ITIH5",   "RBP1",   "HES1",  "KCNN3",   "MATN2",  "EDIL3",    "CITED2", 
-# [9] "PROCR"
+# [1] "SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", "PROCR",
+# [8] "ITIH5",   "RBP1",   "HES1",  "KCNN3",   "MATN2",  "EDIL3",    "CITED2"
