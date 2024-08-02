@@ -1,1 +1,117 @@
+# Analysis using BITFAM (Bayesian inference transcription factor activity model) R package
+# Ref: Shang Gao, Yang Dai, Jalees Rehman. "A Bayesian inference transcription factor activity model for the analysis of single-cell transcriptomes." Genome Res. 2021 Jul;31(7):1296-1311. PMID: 34193535
+
+
+library(dplyr)
+library(Seurat)
+library(cowplot)
+library(Matrix)
+library(patchwork)
+library(ggplot2)
+
+######### Import dataset CRC_2022-09-05.rds) ###########################
+ds <-readRDS("output/CRC_final_2022-09-05.rds")
+ds.fbst <- subset(ds, idents = c("fibroblast-1", "fibroblast-2", "fibroblast_stem-1", "fibroblast_stem-2") )
+
+# GP.gset : Good prognosis-fibrosis associated geneset 
+GP.gset <- c("SMPDL3A", "C8orf4", "EDNRB", "CXCL14",  "PDGFRA", "ADAMDEC1", 
+             "ITIH5", "RBP1", "HES1", "KCNN3", "MATN2", "EDIL3","CITED2")
+
+ds.fbst <- AddModuleScore(ds.fbst, features = list('GP-fbst' = GP.gset),name="GP-fbst")
+FeaturePlot(ds.fbst, features = c("GP.fbst1"))
+boxplot(ds.fbst$GP.fbst1)
+
+meta <- ds.fbst@meta.data
+GP.gset.high <- row.names(meta)[meta[ ,"GP.fbst1"] > 0.5]
+GP.gset.low <- row.names(meta)[meta[ ,"GP.fbst1"] < -0.1]
+
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.high,
+                    value = "GP.gset.high")
+ds.fbst <- SetIdent(object = ds.fbst,
+                    cells = GP.gset.low,
+                    value = "GP.gset.low")
+DimPlot(ds.fbst, label = F, cols = c("red", "blue", "grey", "grey", "grey", "grey"))
+
+ds.fbst.selected <- subset(ds.fbst, idents = c("GP.gset.high", "GP.gset.low"))
+ds.fbst.selected <- FindVariableFeatures(ds.fbst.selected, selection.method = "vst", nfeatures = 2000)
+
+# ------------------------------------------------------------------------------
+library(rstan)
+library(BITFAM)
+library(annotables)
+
+data_matrix_normalized <- as.matrix(ds.fbst.selected@assays$RNA@data)
+data_matrix_normalized <- data_matrix_normalized[VariableFeatures(ds.fbst.selected), ]
+
+BITFAM_res <- BITFAM(data = data_matrix_normalized, species = "human",
+                     scATAC_obj = NA, ncores = parallel::detectCores())
+Z <- BITFAM_activities(BITFAM_res)
+
+library(ggplot2)
+library(Rtsne)
+
+Z_tsne <- as.data.frame(Rtsne(Z)$Y)
+colnames(Z_tsne) <- c("tSNE_1", "tSNE_2")
+levels(ds.fbst.selected@active.ident)
+
+Z_tsne$Cell_type <- ds.fbst.selected@active.ident
+ggplot(Z_tsne, aes(tSNE_1, tSNE_2, color = Cell_type)) + geom_point(size=0.8)
+
+#---------------------------------------------------------------------------------
+cell_type_df <- data.frame(gp.High = ifelse(ds.fbst.selected@active.ident =="GP.gset.high",1,0),
+                           gp.Low = ifelse(ds.fbst.selected@active.ident =="GP.gset.low",1,0) )
+
+colnames(Z)  # Please check colnames of Z. If "-" is included within gene name like "NKX3-1", then change the name to "NKX3_1".
+# colnames(Z)[73] <- "NKX3_1"
+
+install.packages("randomForest", dependencies = T)
+# This installing process is not working within rstudio.
+# run install.packages("randomForest", dependencies = T) in R base
+library(randomForest)
+Z <- as.data.frame(Z)
+Z_gp.High <- cbind(Z, gp.High=cell_type_df$gp.High)
+Z_gp.High$gp.High <- factor(Z_gp.High$gp.High)
+fit_rf <- randomForest(gp.High~., data = Z_gp.High)  ## build the RF model
+gp.High_tf_top10 <- importance(fit_rf)[order(importance(fit_rf)[, 1], decreasing = T), ][1:10]  
+
+Z_gp.Low <- cbind(Z, gp.Low=cell_type_df$gp.Low)
+Z_gp.Low$gp.Low <- factor(Z_gp.Low$gp.Low)
+fit_rf <- randomForest(gp.Low~., data = Z_gp.Low)  ## build the RF model
+gp.Low_tf_top10 <- importance(fit_rf)[order(importance(fit_rf)[, 1], decreasing = T), ][1:10]  
+
+
+## Build the inferred TF activities for selected TFs
+selected_TF_Z <- Z[, names(c(gp.High_tf_top10, gp.Low_tf_top10))]
+selected_TF_Z <- apply(selected_TF_Z, 2, function(x) (x-min(x))/(max(x)-min(x)))
+label <- ds.fbst.selected@active.ident
+
+## Build the dataframe for heatmap
+data_fr <- data.frame(cells = rep(rownames(selected_TF_Z), each = length(colnames(selected_TF_Z))), 
+                      TF = rep(colnames(selected_TF_Z), length(rownames(selected_TF_Z))), 
+                      stringsAsFactors = F)
+  length(rownames(selected_TF_Z))   # [1] 5376
+  length(colnames(selected_TF_Z))   # [1] 20
+
+  
+data_fr$activity <- as.vector(as.matrix(t(selected_TF_Z)))
+data_fr$cell_type <- factor(rep(label, each = 20))
+data_fr$TF <- factor(data_fr$TF, levels = colnames(selected_TF_Z))
+
+## Generate heatmap figure
+ggplot(data_fr, mapping = aes(x = cells, y = TF, fill = activity)) + geom_tile() +
+  scale_fill_gradient(low = "white",
+                      high = "red",
+                      name = "Activity") +
+  scale_y_discrete(position = "right", label = colnames(selected_TF_Z)) +
+  facet_grid(facets = ~cell_type,
+             drop = TRUE,
+             space = "free",
+             scales = "free",
+             aes(fill=cell_type)) +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_text(size = 12, face="bold"),
+        strip.text = element_text("none"))
 
