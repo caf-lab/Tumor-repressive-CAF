@@ -53,7 +53,7 @@ ds.fbst <- SetIdent(object = ds.fbst,
 ds.fbst <- SetIdent(object = ds.fbst,
                     cells = GP.gset.low,
                     value = "GP.gset.low")
-DimPlot(ds.fbst, label = F, cols = c("red", "blue", "grey", "grey", "grey", "grey"))
+DimPlot(ds.fbst, label = F, cols = c("gray88", "red", "gray88", "gray88", "gray88", "gray88"))
 ```
 
 ##  Identify upregulated genes in the fibroblast population showing high 'GP.fbst' module score
@@ -107,7 +107,7 @@ survival_cal = function(TARGET){
   aa <- survdiff(Surv(OS.time, OS == 1)~set1, data=Pan_CDR_target_tmp)
   out.set1 <- survfit(Surv(OS.time, OS == 1) ~ set1, data=Pan_CDR_target_tmp)
   
-  plot(out.set1, lty=1:2, col=c("red","blue"),
+  plot(out.set1, lty=1:1, col=c("blue","red"),
        main = paste0(TARGET, "  P value= ", aa$pvalue),
        xlab = "Days after diagnosis",
        ylab = "Percentage of survival")
