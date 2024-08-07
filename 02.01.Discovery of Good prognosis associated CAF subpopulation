@@ -80,19 +80,16 @@ GP.markers
 ## Calculation of enrichment score of "GP.markers" in TCGA colorectal cancer RNA-seq dataset
 ### "GP.markers": The list of upregulated genes in the fibroblast population showing high 'GP.fbst' module score
 ```{r}
-# Convert GP.markers to a list format suitable for GSVA
-   gs <- list(GP_markers = GP.markers)
-# Load TCGA colorectal cancer RNA-seq dataset
+ # Convert GP.markers to a list format suitable for GSVA
+   gs <- list(GP.markers)
+   names(gs) <- c("GP_markers")
+ # Load TCGA colorectal cancer RNA-seq dataset
    load("../data/CRC_expression_os.rda") 
    CRC_expression <- as.matrix(CRC_expression)
-# Perform GSVA to calculate enrichment scores
-   gsva.es <- gsva(CRC_expression, gs, method = "gsva", verbose = FALSE)
-# Display the dimensions of the resulting enrichment score matrix
-   dim(gsva.es) # [1]  1 607
-# Display the first few enrichment scores
-   gsva.es[1, 1:5]
+ # Perform GSVA to calculate enrichment scores
+   gsvaPar <- gsvaParam(CRC_expression, gs)
+   gsva.es <- gsva(gsvaPar, verbose=FALSE)
 ```
-
 
 
 ## Survival Analysis Based on 'GP Markers' Enrichment Scores in TCGA Colorectal Cancer Dataset
